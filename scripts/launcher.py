@@ -18,6 +18,22 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 from rich import print as rprint
 
+def load_env_file(env_file: str = ".env.dev"):
+    """Load environment variables from a .env file"""
+    env_path = Path(env_file)
+    if env_path.exists():
+        console.print(f"[dim]📄 Loading environment from {env_file}[/dim]")
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+                    console.print(f"[dim]   ✓ {key.strip()}[/dim]")
+        console.print()
+    else:
+        console.print(f"[yellow]⚠️  Environment file {env_file} not found[/yellow]")
+
 app = typer.Typer(
     name="fastapi-launcher",
     help="🚀 Launch your FastAPI application with style!",
@@ -36,6 +52,9 @@ def dev(
     """
     🎯 Launch FastAPI development server with auto-reload
     """
+    # Load environment variables from .env.dev
+    load_env_file()
+    
     # Create a beautiful startup banner
     banner = Panel.fit(
         Text("🚀 FastAPI Development Server", style="bold blue", justify="center"),
@@ -135,6 +154,9 @@ def prod(
     """
     🏭 Launch FastAPI in production mode (no auto-reload)
     """
+    # Load environment variables from .env.dev
+    load_env_file()
+    
     banner = Panel.fit(
         Text("🏭 FastAPI Production Server", style="bold red", justify="center"),
         border_style="red",
