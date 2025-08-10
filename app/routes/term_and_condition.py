@@ -25,31 +25,39 @@ terms_utils = TermsAndConditionUtils()
 
 def normalize_url(url: str) -> str:
     """
-    Normalize URL by adding 'www.' if missing
+    Normalize URL to root domain, removing tracking parameters and paths
     
     Examples:
-    - https://example.com → https://www.example.com
+    - https://example.com/some/path?param=value → https://www.example.com
+    - https://www.amazon.fr/?&linkCode=ll2&tag=vivfr-21 → https://www.amazon.fr
     - http://example.com → http://www.example.com
-    - https://www.example.com → https://www.example.com (unchanged)
     - https://subdomain.example.com → https://subdomain.example.com (unchanged)
     """
     try:
         parsed = urlparse(url)
         
+        # Clean up the netloc (remove tracking, keep subdomain structure)
+        netloc = parsed.netloc.lower()
+        
         # Only add www. if:
         # 1. URL doesn't already have www.
         # 2. Domain doesn't have a subdomain (no dots before the main domain)
-        netloc = parsed.netloc.lower()
-        
         if not netloc.startswith('www.') and netloc.count('.') == 1:
             # Add www. to the domain
-            new_netloc = f"www.{netloc}"
-            new_parsed = parsed._replace(netloc=new_netloc)
-            normalized_url = urlunparse(new_parsed)
-            logger.info(f"📝 Normalized URL: {url} → {normalized_url}")
-            return normalized_url
+            netloc = f"www.{netloc}"
         
-        return url
+        # Create clean root URL (no path, no query parameters, no fragments)
+        clean_url = urlunparse((
+            parsed.scheme,      # Keep original scheme (http/https)
+            netloc,            # Cleaned netloc
+            '',                # Remove path
+            '',                # Remove params
+            '',                # Remove query
+            ''                 # Remove fragment
+        ))
+        
+        logger.info(f"📝 Normalized URL: {url} → {clean_url}")
+        return clean_url
         
     except Exception as e:
         logger.warning(f"Failed to normalize URL {url}: {str(e)}")
