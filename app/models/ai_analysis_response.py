@@ -3,7 +3,7 @@ AI Analysis response models
 """
 
 from typing import Optional, List, Dict
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, field_validator
 
 
 class TermsAnalysis(BaseModel):
@@ -34,9 +34,11 @@ class AIAnalysisResponse(BaseModel):
 
 
 class AnalyzeTermsRequest(BaseModel):
-    url: HttpUrl
+    url: str
     
     @field_validator('url')
     def validate_url(cls, v):
-        """Ensure URL is valid"""
-        return str(v)
+        """Ensure URL is a non-empty string"""
+        if not v or not v.strip():
+            raise ValueError("URL cannot be empty")
+        return v.strip()
